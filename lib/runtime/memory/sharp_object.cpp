@@ -27,6 +27,7 @@ void init_struct(sharp_object *o) {
     o->type = 0;
     o->size = 0;
     o->info = 0;
+    o->arrayFlag = 0;
     o->refCount = 0;
     o->HEAD = nullptr;
 }
@@ -55,7 +56,7 @@ sharp_object* create_static_object(sharp_class* sc, bool unsafe) {
 
     if(o->size > 0)
     {
-        o->node = malloc_struct<object>(sizeof(object),  o->size, unsafe);
+        o->node = calloc_mem<object>(o->size, sizeof(object), unsafe);
         for(Int i = 0; i < o->size; i++) {
             sharp_field *field = sc->fields + (sc->instanceFields + i);
             if(field->type->type <= type_var && !field->isArray && check_flag(field->flags, flag_static)) {
@@ -78,7 +79,7 @@ sharp_object* create_object(sharp_class* sc, bool unsafe) {
 
     if(o->size > 0)
     {
-        o->node = malloc_struct<object>(sizeof(object),  o->size, unsafe);
+        o->node = calloc_mem<object>(o->size, sizeof(object), unsafe);
         for(Int i = 0; i < sc->instanceFields; i++) {
             sharp_field *field = sc->fields + i;
             if(field->type->type <= type_var && !field->isArray) {
@@ -99,9 +100,10 @@ sharp_object* create_object(sharp_class* sc, Int size, bool unsafe) {
         init_struct(o);
         o->size = size;
         o->type = type_class;
+        o->arrayFlag = 1;
         SET_INFO(o->info, sc->address, gc_young);
 
-        o->node = malloc_struct<object>(sizeof(object), size, unsafe);
+        o->node = calloc_mem<object>(size, sizeof(object), unsafe);
         push_object(o);
         return o;
     }
@@ -177,9 +179,10 @@ sharp_object* create_object(Int size, bool unsafe) {
         init_struct(o);
         o->size = size;
         o->type = type_object;
+        o->arrayFlag = 1;
         SET_GENERATION(o->info, gc_young);
 
-        o->node = malloc_struct<object>(sizeof(object), size, unsafe);
+        o->node = calloc_mem<object>(size, sizeof(object), unsafe);
         push_object(o);
         return o;
     }
@@ -195,12 +198,9 @@ sharp_object* create_object(Int size, data_type type, bool unsafe) {
         init_struct(o);
         o->size = size;
         o->type = type;
+        o->arrayFlag = 1;
         SET_GENERATION(o->info, gc_young);
-
-        o->HEAD = malloc_mem<long double>(sizeof(long double) * size, unsafe);
-        for(Int i = 0; i < size; i++) {
-            o->HEAD[i] = 0;
-        }
+        o->HEAD = calloc_mem<long double>(size, sizeof(long double), unsafe);
 
         push_object(o);
         return o;

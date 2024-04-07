@@ -41,6 +41,6 @@ void markExplicitObfuscatedClass(sharp_class *mklass) {
 void markExplicitObfuscatedItems() {
     for(Int i = 0; i < classes.size(); i++) {
         auto mklass = classes.get(i);
-        markExplicitObfuscatedClass(mklass);
+markExplicitObfuscatedClass(mklass);
     }
 }

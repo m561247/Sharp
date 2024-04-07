@@ -27,7 +27,7 @@ CXX11_INLINE void init_struct(sharp_class *sc) {
 bool are_classes_related(sharp_class *base, sharp_class *reference) {
     if(base == NULL || reference == NULL)
         return false;
-    if(base->guid == reference->guid)
+    if(base->hash == reference->hash)
         return true;
 
     for(Int i = 0; i < base->interfaceCount; i++) {

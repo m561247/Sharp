@@ -9,6 +9,8 @@
     #include "lib/runtime/main.h"
 #endif
 
+ Int serializeTime = 0;
+
 int main(int argc, const char* argv[]) {
     uint64_t past= Clock::realTimeInNSecs(),now;
     Int result = 0;
@@ -22,6 +24,8 @@ int main(int argc, const char* argv[]) {
 
     now= Clock::realTimeInNSecs();
 
+
+    cout << endl << "Serialized in " << serializeTime << "us\n";
     cout << endl << "Compiled in " << NANO_TOMICRO(now-past) << "us & "
              << NANO_TOMILL(now-past) << "ms\n";
     cout << endl << "program exiting..." << endl;

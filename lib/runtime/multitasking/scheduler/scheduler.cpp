@@ -64,36 +64,15 @@ void run_scheduler() {
         sched_unsched_items();
         schth = sched_threads;
 
-//        if(taskCount == 1) {
-//            this_thread::yield();
-//            goto check_state;
-//        }
-
         if(scht == nullptr) {
             scht = sched_tasks;
         }
 
-        // prepare threads for context switch
-        while (schth != nullptr) {
-            if (schth->thread->id == gc_threadid || schth->thread->id == idle_threadid) {
-                schth = schth->next;
-                continue;
-            }
-
-            if (vm.state >= VM_SHUTTING_DOWN) {
-                break;
-            }
-
-            auto next = schth->next;
-            thread_sched_prepare(schth);
-            schth = next;
-        }
-
-        std::this_thread::yield(); // yield to give threads some time to go into sched mode
         schth = sched_threads;
         while (schth != nullptr) {
-            if(!can_sched_thread(schth->thread)) {
-                schth = schth->next;
+            auto next = schth->next;
+            if(!ready_or_diapose(schth)) {
+                schth = next;
                 continue;
             }
 
@@ -121,8 +100,11 @@ void run_scheduler() {
                     goto wrap;
                 }
                 else if(is_runnable(scht->task, schth->thread, taskWrap)) {
-                    queue_task(schth->thread, scht);
-                    scht = scht->next;
+                    if(trigger_thread_sched(schth)) {
+                        queue_task(schth->thread, scht);
+                        scht = scht->next;
+                    }
+
                     break;
                 }
 
@@ -135,7 +117,7 @@ void run_scheduler() {
                 }
             }
 
-            schth = schth->next;
+            schth = next;
         }
 
         check_state:

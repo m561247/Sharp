@@ -26,6 +26,8 @@ public def start_scheduler() {
 	}
 }
 
+protected def scheduler_running() := scheduler != null;
+
 private def calculate_max_threads() {
     n_cores : var = vm.hardware_concurrency().value;
     n_cores -= 2;

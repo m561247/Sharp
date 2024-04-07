@@ -11,6 +11,7 @@
 struct sharp_class;
 struct sharp_function;
 struct sharp_type;
+struct sharp_object;
 
 struct sharp_field {
     int32_t address;
@@ -22,6 +23,7 @@ struct sharp_field {
     sharp_type *type;
     bool isArray;
     bool threadLocal;
+    sharp_object *reflect;
 };
 
 CXX11_INLINE void init_struct(sharp_field *sf);

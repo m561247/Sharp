@@ -21,8 +21,8 @@ optimize_context octx;
 void optimize() {
     if(genesis_method != NULL && user_main_method != NULL) {
         markRelevantDependencyMembers();
-        injectAllRelevantFields();
         markExplicitObfuscatedItems();
+        injectAllRelevantFields();
         validateNonNullableInitializations();
         pre_generate_addresses();
         validate_required_dependencies();

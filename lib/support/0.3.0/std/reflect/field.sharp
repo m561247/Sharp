@@ -2,8 +2,7 @@ mod std.reflect;
 
 
 class field {
-    instance : object;
-    properties : data_property;
+    subject : object;
+    info : field_info;
 }
-
 

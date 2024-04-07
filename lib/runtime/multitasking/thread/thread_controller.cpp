@@ -815,6 +815,7 @@ void unsuspend_and_wait(sharp_thread* thread, bool sendSignal) {
 
 void wait_for_unsuspend_release(sharp_thread* thread) {
     const long sMaxRetries = 1000;
+    uint64_t past= Clock::realTimeInNSecs(),now;
 
     long spinCount = 0;
     long retryCount = 0;
@@ -828,23 +829,32 @@ void wait_for_unsuspend_release(sharp_thread* thread) {
             spinCount++;
             retryCount = 0;
 
-#ifdef COROUTINE_DEBUGGING
-            thread->timeSleeping += 1000;
-#endif
             __usleep(1000);
         } else if(thread->state == THREAD_KILLED) {
             thread->suspended = false;
+#ifdef COROUTINE_DEBUGGING
+        now= Clock::realTimeInNSecs();
+        thread->timeSleeping += NANO_TOMICRO(now-past);
+#endif
             return;
         } else if(vm.state == VM_SHUTTING_DOWN) {
             thread->suspended = false;
             guard_mutex(thread->mut)
             sendSignal(thread->signal, tsig_kill, 1);
+#ifdef COROUTINE_DEBUGGING
+        now= Clock::realTimeInNSecs();
+        thread->timeSleeping += NANO_TOMICRO(now-past);
+#endif
             return;
         }
     }
 
     {
         guard_mutex(thread->mut);
+#ifdef COROUTINE_DEBUGGING
+        now= Clock::realTimeInNSecs();
+        thread->timeSleeping += NANO_TOMICRO(now-past);
+#endif
         thread->state = THREAD_RUNNING;
         sendSignal(thread->signal, tsig_suspend, 0);
     }
@@ -1013,6 +1023,24 @@ void thread_sched_prepare(_sched_thread *scht) {
 
 bool can_sched_thread(sharp_thread *thread) {
     return hasSignal(thread->signal, tsig_context_switch) && thread->state == THREAD_SCHED;
+}
+
+bool trigger_thread_sched(_sched_thread *scht) {
+    enable_context_switch(scht->thread, true);
+    std::this_thread::yield();
+    return can_sched_thread(scht->thread);
+}
+
+bool ready_or_diapose(_sched_thread *scht) {
+    if (can_dispose(scht)) {
+        dispose(scht);
+        return false;
+    } else if(scht->thread->state == THREAD_SCHED)
+        return true;
+     else if(scht->thread->state != THREAD_RUNNING)
+        return false;
+
+    return is_thread_ready(scht->thread);
 }
 
 void queue_task(sharp_thread *thread, sched_task *task) {

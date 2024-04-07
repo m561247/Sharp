@@ -21,6 +21,7 @@
 #define STANDARD_OBJECT (0x009)
 #define NUMERIC_OBJECT (0x3a)
 #define CLASS_OBJECT (0x1a)
+#define CLASS_ARRAY_OBJECT (0x1b)
 
 struct serialize_buffer_t
 {
@@ -44,6 +45,13 @@ struct serialized_classes_t
     uint32_t count = 0;
 };
 
+struct object_buffer_t
+{
+    sharp_object **buf = nullptr;
+    int32_t size = 0;
+    int32_t pos = -1;
+};
+
 #define buffer_size(buf) \
 buf.pos + 1
 
@@ -57,15 +65,15 @@ buf.pos + 1
     if(((buffer.pos) + 4) >= (buffer.size)) { \
         alloc_buffer(buffer); \
     } \
-    (buffer.buf)[++(buffer.pos)] = GET_i32w(data); \
+(buffer.buf)[++(buffer.pos)] = GET_i32w(data); \
     (buffer.buf)[++(buffer.pos)] = GET_i32x(data); \
     (buffer.buf)[++(buffer.pos)] = GET_i32y(data); \
     (buffer.buf)[++(buffer.pos)] = GET_i32z(data);
 
-#define push_double(buffer, data) \
-    std::memcpy(doubleBytes, &data, sizeof(long double)); \
-    for(int jj = 0; jj < sizeof(long double); jj++) { \
-        push_data(buffer, doubleBytes[jj]) \
+#define push_bytes(buffer, type, data) \
+    unsigned char *bytes = reinterpret_cast<unsigned char*>(&data); \
+    for(int jj = 0; jj < sizeof(type); jj++) { \
+        push_data(buffer, bytes[jj]) \
     }
 
 #define formatted_buffer(pos) \
@@ -94,14 +102,20 @@ buf.pos + 1
 #define read_data \
     formatted_buffer(++dBuffer.pos)
 
-#define read_double(out) \
-    if((dBuffer.pos + sizeof(long double)) >= dBuffer.size) { \
+#define pek_data(out) \
+    if((dBuffer.pos + 1) >= dBuffer.size) { \
         throw vm_exception("invalid format: unexpected end of deserialization buffer");\
     } \
-    for(int jj = 0; jj < sizeof(long double); jj++) { \
-        doubleBytes[jj] = read_data; \
+    (out) = formatted_buffer(dBuffer.pos+1);
+
+#define read_bytes(type, bytes, out) \
+    if((dBuffer.pos + sizeof(type)) >= dBuffer.size) { \
+        throw vm_exception("invalid format: unexpected end of deserialization buffer");\
     } \
-    std::memcpy(&(out), doubleBytes, sizeof(long double));
+    for(int jj = 0; jj < sizeof(type); jj++) { \
+        bytes[jj] = read_data; \
+    } \
+    out = *reinterpret_cast<type*>(bytes); \
 
 void serialize(object *from, object *to);
 void deserialize(object *from, object *to);

@@ -29,6 +29,7 @@ struct sharp_object {
     uint32_t size;
     uint32_t refCount;
     unsigned short type : 5; // the type of object represents {class, var, _int64, etc}
+    unsigned short arrayFlag : 1;
 
     /**
      * Information package

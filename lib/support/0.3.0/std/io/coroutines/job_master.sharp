@@ -26,6 +26,9 @@ class job_master {
 	protected def create_job(name : string) := new job(name);
 
 	protected def start_job(scheduled_job : job) {
+		if(!scheduler_running())
+			start_scheduler();
+			
 		if(scheduled_job.block_caller)
 			execute_synchronous(scheduled_job);
 		else {

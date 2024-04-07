@@ -85,4 +85,8 @@ void shutdown_thread(sharp_thread*);
 void __os_sleep(uInt);
 void setup_thread(sharp_thread*);
 
+
+bool ready_or_diapose(_sched_thread *scht);
+bool trigger_thread_sched(_sched_thread *scht);
+
 #endif //SHARP_THREAD_CONTROLLER_H
